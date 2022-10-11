@@ -59,6 +59,8 @@ int OnInit()
    ArraySetAsSeries(g_bufferDown,  true);
    ArraySetAsSeries(g_bufferTrend, true);
    
+   BufferZeroing();
+   
    return INIT_SUCCEEDED;
 }
 
@@ -89,9 +91,7 @@ int OnCalculate(const int ratesTotal,
       g_bufferTrend[limit-1] = ZIGZAGMAX_TREND_NONE;
    else if (limit > 1)
    {
-      ArrayInitialize(g_bufferUp, 0.0);
-      ArrayInitialize(g_bufferDown, 0.0);
-      ArrayInitialize(g_bufferTrend, ZIGZAGMAX_TREND_NONE);
+      BufferZeroing();
       
       i = limit-1;
       g_trendType  = ZIGZAGMAX_TREND_UP;
@@ -285,6 +285,16 @@ void NewDownTrend(int i, int plus)
    g_iLowTime  = iTime(NULL,0,i);
    g_iLowPrice = iLow(NULL,0,i);
    g_bufferDown[i] = iLow(NULL,0,i);
+}
+
+//+------------------------------------------------------------------+
+//| Zeroing the buffer                                               |
+//+------------------------------------------------------------------+
+void BufferZeroing()
+{
+   ArrayInitialize(g_bufferUp, 0.0);
+   ArrayInitialize(g_bufferDown, 0.0);
+   ArrayInitialize(g_bufferTrend, ZIGZAGMAX_TREND_NONE);
 }
 
 //+------------------------------------------------------------------+
