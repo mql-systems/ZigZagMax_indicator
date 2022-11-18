@@ -4,6 +4,8 @@ ZigZagMax indicator for MT4 and MT5.
 
 The indicator maximally shows all the movements on the chart in the form of a zigzag.
 
+![ZigZagMax](https://github.com/mql-systems/ZigZagMax_indicator/raw/main/image.png)
+
 ## Download
 
 - [MT4](https://github.com/mql-systems/ZigZagMax_indicator/releases/download/v1.02/ZigZagMax.ex4)
