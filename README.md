@@ -11,7 +11,7 @@ ZigZagMax indicator for MT4 and MT5
 
 ## Install
 
-It is installed as normal indicators.
+It is installed as regular MQL Indicators.
 
 All indicators are stored in the "**/MQL5(4)/Indicators**" folder of the trading platform.
 To quickly jump to it, click "**Open Data Folder**" in the "**File**" menu.
