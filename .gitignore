@@ -1,3 +1,5 @@
 # MQL
-*.ex4
-*.ex5
+*.ex*
+
+# HTML
+*.htm*
