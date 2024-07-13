@@ -1,9 +1,9 @@
 //+------------------------------------------------------------------+
 //|                                                    ZigZagMax.mq4 |
-//|                            Copyright 2022, Diamond Systems Corp. |
+//|                       Copyright 2022-2024, Diamond Systems Corp. |
 //|                                   https://github.com/mql-systems |
 //+------------------------------------------------------------------+
-#property copyright "Copyright 2022, Diamond Systems Corp."
+#property copyright "Copyright 2022-2024, Diamond Systems Corp."
 #property link      "https://github.com/mql-systems"
 #property version   "1.02"
 #property indicator_chart_window
