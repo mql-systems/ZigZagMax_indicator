@@ -1,3 +1,4 @@
+//###<Indicators/AT/ZigZagMax/ZigZagMax.mq5>
 //+------------------------------------------------------------------+
 //|                                                    ZigZagMax.mq4 |
 //|                       Copyright 2022-2024, Diamond Systems Corp. |
