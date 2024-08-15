@@ -8,14 +8,17 @@
 #property version   "1.00"
 #property indicator_chart_window
 //---
-#property indicator_buffers 3
+#property indicator_buffers 4
+//---
 #property indicator_type1 DRAW_ZIGZAG
 #property indicator_type2 DRAW_ZIGZAG
-#property indicator_type3 DRAW_NONE
 #property indicator_color1 clrOrange
 #property indicator_color2 clrOrange
 #property indicator_label1 "ZigZag Up"
 #property indicator_label2 "ZigZag Down"
-#property indicator_label3 "ZigZag Trend"
+//---
+#property indicator_type3  DRAW_ARROW
+#property indicator_color3 clrNONE
+#property indicator_label3 "ZigZag Max Change Points"
 
 #include "ZigZagMax.mqh"

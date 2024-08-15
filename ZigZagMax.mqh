@@ -32,8 +32,8 @@ int      g_iSearchBar;
 //--- buffers
 double g_bufferUp[];
 double g_bufferDown[];
+double g_bufferMaxChangePoints[];
 double g_bufferTrend[];
-double g_bufferTrendChange[];
 
 //+------------------------------------------------------------------+
 //| App initialization function                                      |
@@ -44,8 +44,8 @@ int OnInit()
 
    SetIndexBuffer(0, g_bufferUp);
    SetIndexBuffer(1, g_bufferDown);
-   SetIndexBuffer(2, g_bufferTrend);
-   SetIndexBuffer(3, g_bufferTrendChange);
+   SetIndexBuffer(3, g_bufferMaxChangePoints);
+   SetIndexBuffer(2, g_bufferTrend, INDICATOR_CALCULATIONS);
 
 #ifdef __MQL4__
    SetIndexEmptyValue(0, ZZM_BUFFER_EMPTY);
@@ -55,8 +55,6 @@ int OnInit()
 #else
    PlotIndexSetDouble(0, PLOT_EMPTY_VALUE, ZZM_BUFFER_EMPTY);
    PlotIndexSetDouble(1, PLOT_EMPTY_VALUE, ZZM_BUFFER_EMPTY);
-   PlotIndexSetDouble(2, PLOT_EMPTY_VALUE, ZZM_BUFFER_EMPTY);
-   PlotIndexSetDouble(3, PLOT_EMPTY_VALUE, ZZM_BUFFER_EMPTY);
 #endif
 
    BufferInitialize();
@@ -112,7 +110,7 @@ int OnCalculate(const int ratesTotal,
       g_bufferUp[limit] = high[limit];
       g_bufferDown[limit] = low[limit];
       g_bufferTrend[limit] = ZZM_BUFFER_EMPTY;
-      g_bufferTrendChange[limit] = ZZM_BUFFER_EMPTY;
+      g_bufferMaxChangePoints[limit] = ZZM_BUFFER_EMPTY;
       --limit;
    }
 
@@ -120,7 +118,7 @@ int OnCalculate(const int ratesTotal,
    g_bufferUp[0] = ZZM_BUFFER_EMPTY;
    g_bufferDown[0] = ZZM_BUFFER_EMPTY;
    g_bufferTrend[0] = ZZM_BUFFER_EMPTY;
-   g_bufferTrendChange[0] = ZZM_BUFFER_EMPTY;
+   g_bufferMaxChangePoints[0] = ZZM_BUFFER_EMPTY;
 
    int ibar;
    double trendType;
@@ -130,7 +128,7 @@ int OnCalculate(const int ratesTotal,
       g_bufferUp[i] = ZZM_BUFFER_EMPTY;
       g_bufferDown[i] = ZZM_BUFFER_EMPTY;
       g_bufferTrend[i] = ZZM_BUFFER_EMPTY;
-      g_bufferTrendChange[i] = ZZM_BUFFER_EMPTY;
+      g_bufferMaxChangePoints[i] = ZZM_BUFFER_EMPTY;
 
       //--- Up
       if (g_trendType > ZZM_TREND_NONE)
@@ -156,7 +154,7 @@ int OnCalculate(const int ratesTotal,
                   g_bufferUp[ibar] = ZZM_BUFFER_EMPTY;
                   g_bufferUp[i] = high[i];
                   g_bufferTrend[i] = ZZM_BUFFER_TREND_UP;
-                  g_bufferTrendChange[i] = low[i];
+                  g_bufferMaxChangePoints[i] = low[i];
 
                   if (g_bufferDown[ibar] != ZZM_BUFFER_EMPTY)
                      g_bufferTrend[ibar] = ZZM_BUFFER_TREND_DOWN;
@@ -182,7 +180,7 @@ int OnCalculate(const int ratesTotal,
                         g_bufferDown[ibar] = ZZM_BUFFER_EMPTY;
                         g_bufferDown[j] = low[j];
                         g_bufferTrend[j] = ZZM_BUFFER_TREND_DOWN;
-                        g_bufferTrendChange[j] = high[j];
+                        g_bufferMaxChangePoints[j] = high[j];
 
                         if (g_bufferUp[ibar] != ZZM_BUFFER_EMPTY)
                            g_bufferTrend[ibar] = ZZM_BUFFER_TREND_UP;
@@ -229,7 +227,7 @@ int OnCalculate(const int ratesTotal,
                   g_bufferDown[ibar] = ZZM_BUFFER_EMPTY;
                   g_bufferDown[i] = low[i];
                   g_bufferTrend[i] = ZZM_BUFFER_TREND_DOWN;
-                  g_bufferTrendChange[i] = high[i];
+                  g_bufferMaxChangePoints[i] = high[i];
 
                   if (g_bufferUp[ibar] != ZZM_BUFFER_EMPTY)
                      g_bufferTrend[ibar] = ZZM_BUFFER_TREND_UP;
@@ -255,7 +253,7 @@ int OnCalculate(const int ratesTotal,
                         g_bufferUp[ibar] = ZZM_BUFFER_EMPTY;
                         g_bufferUp[j] = high[j];
                         g_bufferTrend[j] = ZZM_BUFFER_TREND_UP;
-                        g_bufferTrendChange[j] = low[j];
+                        g_bufferMaxChangePoints[j] = low[j];
 
                         if (g_bufferDown[ibar] != ZZM_BUFFER_EMPTY)
                            g_bufferTrend[ibar] = ZZM_BUFFER_TREND_DOWN;
@@ -327,7 +325,7 @@ void NewUpTrend(const int i, const int plus, const datetime &time[], const doubl
          g_bufferDown[ibar] = ZZM_BUFFER_EMPTY;
          g_bufferDown[j] = low[j];
          g_bufferTrend[j] = ZZM_BUFFER_TREND_DOWN;
-         g_bufferTrendChange[j] = high[j];
+         g_bufferMaxChangePoints[j] = high[j];
 
          if (g_bufferUp[ibar] != ZZM_BUFFER_EMPTY)
             g_bufferTrend[ibar] = ZZM_BUFFER_TREND_UP;
@@ -341,7 +339,7 @@ void NewUpTrend(const int i, const int plus, const datetime &time[], const doubl
    g_iHighPrice = high[i];
    g_bufferUp[i] = high[i];
    g_bufferTrend[i] = ZZM_BUFFER_TREND_UP;
-   g_bufferTrendChange[i] = low[i];
+   g_bufferMaxChangePoints[i] = low[i];
 }
 
 //+------------------------------------------------------------------+
@@ -365,7 +363,7 @@ void NewDownTrend(const int i, const int plus, const datetime &time[], const dou
          g_bufferUp[ibar] = ZZM_BUFFER_EMPTY;
          g_bufferUp[j] = high[j];
          g_bufferTrend[j] = ZZM_BUFFER_TREND_UP;
-         g_bufferTrendChange[j] = low[j];
+         g_bufferMaxChangePoints[j] = low[j];
 
          if (g_bufferDown[ibar] != ZZM_BUFFER_EMPTY)
             g_bufferTrend[ibar] = ZZM_BUFFER_TREND_DOWN;
@@ -379,7 +377,7 @@ void NewDownTrend(const int i, const int plus, const datetime &time[], const dou
    g_iLowPrice = low[i];
    g_bufferDown[i] = low[i];
    g_bufferTrend[i] = ZZM_BUFFER_TREND_DOWN;
-   g_bufferTrendChange[i] = high[i];
+   g_bufferMaxChangePoints[i] = high[i];
 }
 
 //+------------------------------------------------------------------+
@@ -389,13 +387,13 @@ void BufferInitialize()
 {
    ArrayInitialize(g_bufferUp, ZZM_BUFFER_EMPTY);
    ArrayInitialize(g_bufferDown, ZZM_BUFFER_EMPTY);
+   ArrayInitialize(g_bufferMaxChangePoints, ZZM_BUFFER_EMPTY);
    ArrayInitialize(g_bufferTrend, ZZM_BUFFER_EMPTY);
-   ArrayInitialize(g_bufferTrendChange, ZZM_BUFFER_EMPTY);
 
    ArraySetAsSeries(g_bufferUp, true);
    ArraySetAsSeries(g_bufferDown, true);
+   ArraySetAsSeries(g_bufferMaxChangePoints, true);
    ArraySetAsSeries(g_bufferTrend, true);
-   ArraySetAsSeries(g_bufferTrendChange, true);
 }
 
 //+------------------------------------------------------------------+
