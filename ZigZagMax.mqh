@@ -20,6 +20,8 @@
 #define ZZM_BUFFER_TREND_DOWN_UP   -2.0
 
 //--- global variables
+datetime g_lastBarTime;
+
 datetime g_iHighTime;
 datetime g_iLowTime;
 datetime g_iSaveTime;
@@ -78,306 +80,102 @@ int OnCalculate(const int ratesTotal,
 {
    //--- new bar
    int limit = ratesTotal - prevCalculated;
-   if (limit == 0)
+   if (limit <= 0)
       return ratesTotal;
-   else if (ratesTotal < 100)
-      return (prevCalculated < 1) ? 0 : ratesTotal;
-
+   if (ratesTotal < 2 || prevCalculated < 0)
+      return 0;
+   
    ArraySetAsSeries(high, true);
    ArraySetAsSeries(low,  true);
    ArraySetAsSeries(time, true);
 
-   //--- Обнуления буффера если не обработанные бары больше одного
-   if (limit > 1)
+   //--- first start indicator (initialize)
+   if (prevCalculated == 0)
    {
-      if (prevCalculated != 0)
-         return 0;
-
       BufferInitialize();
 
-      --limit;
-      g_trendType  = ZZM_TREND_UP;
-      g_iSearchBar = 1;
-      g_iSaveBar   = 0;
-      //---
-      g_iHighTime = time[limit];
-      g_iLowTime  = time[limit];
-      g_iSaveTime = 0;
-      //---
-      g_iHighPrice = high[limit];
-      g_iLowPrice  = low[limit];
-      //---
-      g_bufferUp[limit] = high[limit];
-      g_bufferDown[limit] = low[limit];
-      g_bufferTrend[limit] = ZZM_BUFFER_EMPTY;
-      g_bufferMaxChangePoints[limit] = ZZM_BUFFER_EMPTY;
-      --limit;
-   }
-
-   //--- calc
-   g_bufferUp[0] = ZZM_BUFFER_EMPTY;
-   g_bufferDown[0] = ZZM_BUFFER_EMPTY;
-   g_bufferTrend[0] = ZZM_BUFFER_EMPTY;
-   g_bufferMaxChangePoints[0] = ZZM_BUFFER_EMPTY;
-
-   int ibar;
-   double trendType;
-
-   for (int i = limit; i > 0; i--)
-   {
-      g_bufferUp[i] = ZZM_BUFFER_EMPTY;
-      g_bufferDown[i] = ZZM_BUFFER_EMPTY;
-      g_bufferTrend[i] = ZZM_BUFFER_EMPTY;
-      g_bufferMaxChangePoints[i] = ZZM_BUFFER_EMPTY;
-
-      //--- Up
-      if (g_trendType > ZZM_TREND_NONE)
+      limit--;
+      if (open[limit] > close[limit])
       {
-         // Search Up to Down Trend
-         if (high[i + 1] >= high[i] && low[i + 1] > low[i])
-            NewDownTrend(i, 1, time, high, low);
-         else if (g_iLowPrice > low[i])
-            NewDownTrend(i, 0, time, high, low);
-         else if (g_iSearchBar > 1 && high[i + g_iSearchBar] >= high[i] && low[i + g_iSearchBar] > low[i])
-            NewDownTrend(i, g_iSearchBar, time, high, low);
-         else
-         {
-            // Max High
-            if (g_iHighPrice <= high[i] && (ibar = iBarShift(NULL, 0, g_iHighTime, true)) != -1)
-            {
-               g_iSearchBar = 1;
-
-               if (ibar != i)
-               {
-                  g_iHighPrice = high[i];
-                  g_iHighTime = time[i];
-                  g_bufferUp[ibar] = ZZM_BUFFER_EMPTY;
-                  g_bufferUp[i] = high[i];
-                  g_bufferTrend[i] = ZZM_BUFFER_TREND_UP;
-                  g_bufferMaxChangePoints[i] = low[i];
-
-                  if (g_bufferDown[ibar] != ZZM_BUFFER_EMPTY)
-                     g_bufferTrend[ibar] = ZZM_BUFFER_TREND_DOWN;
-               }
-            }
-            else
-               g_iSearchBar++;
-
-            // Min Low
-            if (g_iSaveTime)
-            {
-               if (high[i + g_iSaveBar] <= high[i])
-               {
-                  if (low[i + g_iSaveBar] < low[i])
-                  {
-                     ibar = iBarShift(NULL, 0, g_iSaveTime, true);
-
-                     if (ibar != -1 && ibar != i + g_iSaveBar)
-                     {
-                        int j = i + g_iSaveBar;
-                        g_iLowPrice = low[j];
-                        g_iLowTime = time[j];
-                        g_bufferDown[ibar] = ZZM_BUFFER_EMPTY;
-                        g_bufferDown[j] = low[j];
-                        g_bufferTrend[j] = ZZM_BUFFER_TREND_DOWN;
-                        g_bufferMaxChangePoints[j] = high[j];
-
-                        if (g_bufferUp[ibar] != ZZM_BUFFER_EMPTY)
-                           g_bufferTrend[ibar] = ZZM_BUFFER_TREND_UP;
-                     }
-                     g_iSaveTime = g_iSaveBar = 0;
-                  }
-                  else
-                  {
-                     g_iSaveBar = 0;
-                     g_iSaveTime = g_iLowTime;
-                  }
-               }
-               else if (low[i + g_iSaveBar] > low[i])
-                  g_iSaveTime = g_iSaveBar = 0;
-            }
-            else if (g_iLowPrice > low[i])
-            {
-               g_iSaveBar = 0;
-               g_iSaveTime = g_iLowTime;
-            }
-         }
+         g_bufferUp[limit] = ZZM_BUFFER_EMPTY;
+         g_bufferDown[limit] = low[limit];
+         g_bufferMaxChangePoints[limit] = low[limit];
+         g_bufferTrend[limit] = ZZM_BUFFER_TREND_DOWN;
       }
-      //--- Down
       else
       {
-         // Search Down to Up Trend
-         if (high[i + 1] < high[i] && low[i + 1] <= low[i])
-            NewUpTrend(i, 1, time, high, low);
-         else if (g_iHighPrice < high[i])
-            NewUpTrend(i, 0, time, high, low);
-         else if (g_iSearchBar > 1 && high[i + g_iSearchBar] < high[i] && low[i + g_iSearchBar] <= low[i])
-            NewUpTrend(i, g_iSearchBar, time, high, low);
-         else
-         {
-            // Min Low
-            if (g_iLowPrice >= low[i] && (ibar = iBarShift(NULL, 0, g_iLowTime, true)) != -1)
-            {
-               g_iSearchBar = 1;
-
-               if (ibar != i)
-               {
-                  g_iLowPrice = low[i];
-                  g_iLowTime = time[i];
-                  g_bufferDown[ibar] = ZZM_BUFFER_EMPTY;
-                  g_bufferDown[i] = low[i];
-                  g_bufferTrend[i] = ZZM_BUFFER_TREND_DOWN;
-                  g_bufferMaxChangePoints[i] = high[i];
-
-                  if (g_bufferUp[ibar] != ZZM_BUFFER_EMPTY)
-                     g_bufferTrend[ibar] = ZZM_BUFFER_TREND_UP;
-               }
-            }
-            else
-               g_iSearchBar++;
-
-            // Max High
-            if (g_iSaveTime)
-            {
-               if (low[i + g_iSaveBar] >= low[i])
-               {
-                  if (high[i + g_iSaveBar] > high[i])
-                  {
-                     ibar = iBarShift(NULL, 0, g_iSaveTime, true);
-
-                     if (ibar != -1 && ibar != i + g_iSaveBar)
-                     {
-                        int j = i + g_iSaveBar;
-                        g_iHighPrice = high[j];
-                        g_iHighTime = time[j];
-                        g_bufferUp[ibar] = ZZM_BUFFER_EMPTY;
-                        g_bufferUp[j] = high[j];
-                        g_bufferTrend[j] = ZZM_BUFFER_TREND_UP;
-                        g_bufferMaxChangePoints[j] = low[j];
-
-                        if (g_bufferDown[ibar] != ZZM_BUFFER_EMPTY)
-                           g_bufferTrend[ibar] = ZZM_BUFFER_TREND_DOWN;
-                     }
-
-                     g_iSaveTime = g_iSaveBar = 0;
-                  }
-                  else
-                  {
-                     g_iSaveBar = 0;
-                     g_iSaveTime = g_iHighTime;
-                  }
-               }
-               else if (high[i + g_iSaveBar] < high[i])
-                  g_iSaveTime = g_iSaveBar = 0;
-            }
-            else if (g_iHighPrice < high[i])
-            {
-               g_iSaveBar = 0;
-               g_iSaveTime = g_iHighTime;
-            }
-         }
+         g_bufferUp[limit] = high[limit];
+         g_bufferDown[limit] = ZZM_BUFFER_EMPTY;
+         g_bufferMaxChangePoints[limit] = high[limit];
+         g_bufferTrend[limit] = ZZM_BUFFER_TREND_UP;
       }
-
-      //--- Trend
-      if (g_bufferTrend[i] != ZZM_BUFFER_EMPTY)
+   }
+   else if (time[limit] != g_lastBarTime)
+      return 0;
+   
+   g_lastBarTime = time[1];
+   
+   //--- calculate
+   for (int i = limit - 1; i > 0; i--)
+   {
+      if (high[i+1] < high[i])
       {
-         trendType = g_bufferTrend[i];
-
-         // reversal on one candle
-         if (g_bufferDown[i] != ZZM_BUFFER_EMPTY && g_bufferUp[i] != ZZM_BUFFER_EMPTY)
-            g_bufferTrend[i] = trendType == ZZM_BUFFER_TREND_UP ? ZZM_BUFFER_TREND_DOWN_UP : ZZM_BUFFER_TREND_UP_DOWN;
-
-         // filling empty trend buffers
-         for (int j = i + 1; j < ratesTotal; j++)
-         {
-            if (g_bufferTrend[j] != ZZM_BUFFER_EMPTY)
-               break;
-            g_bufferTrend[j] = trendType;
-         }
+         if (low[i+1] < low[i] || g_bufferTrend[i] > 0)
+            ChangeZigZagUp(ratesTotal, i, high[i]);
+         else
+            ChangeZigZagDown(ratesTotal, i, low[i]);
       }
-
-      //---
-      if (g_iSaveTime)
-         g_iSaveBar++;
+      else if (low[i+1] > low[i] || g_bufferTrend[i] < 0)
+         ChangeZigZagDown(ratesTotal, i, low[i]);
+      else
+         ChangeZigZagUp(ratesTotal, i, high[i]);
    }
 
    return ratesTotal;
 }
 
 //+------------------------------------------------------------------+
-//| New Up trend                                                     |
+//| Change ZigZag Up                                                 |
 //+------------------------------------------------------------------+
-void NewUpTrend(const int i, const int plus, const datetime &time[], const double &high[], const double &low[])
+void ChangeZigZagUp(int ratesTotal, int i, double high)
 {
-   int ibar;
-   int j = i + plus;
-
-   g_trendType = ZZM_TREND_UP;
-   g_iSearchBar = 1;
-
-   if (g_iLowPrice >= low[j] && (ibar = iBarShift(NULL, 0, g_iLowTime, true)) != -1)
+   for (int j = i + 1; j < ratesTotal; j++)
    {
-      if (ibar != j)
+      if (g_bufferTrend[j] > 0)
       {
-         g_iLowTime = time[j];
-         g_iLowPrice = low[j];
-
-         g_bufferDown[ibar] = ZZM_BUFFER_EMPTY;
-         g_bufferDown[j] = low[j];
-         g_bufferTrend[j] = ZZM_BUFFER_TREND_DOWN;
-         g_bufferMaxChangePoints[j] = high[j];
-
-         if (g_bufferUp[ibar] != ZZM_BUFFER_EMPTY)
-            g_bufferTrend[ibar] = ZZM_BUFFER_TREND_UP;
+         g_bufferUp[j] = ZZM_BUFFER_EMPTY;
+         break;
       }
-
-      if (g_iSaveTime)
-         g_iSaveTime = g_iSaveBar = 0;
+      else if (g_bufferTrend[j] < 0)
+         break;
    }
 
-   g_iHighTime = time[i];
-   g_iHighPrice = high[i];
-   g_bufferUp[i] = high[i];
+   g_bufferUp[i] = high;
+   g_bufferDown[i] = ZZM_BUFFER_EMPTY;
+   g_bufferMaxChangePoints[i] = high;
    g_bufferTrend[i] = ZZM_BUFFER_TREND_UP;
-   g_bufferMaxChangePoints[i] = low[i];
 }
 
 //+------------------------------------------------------------------+
-//| New Down trend                                                   |
+//| Change ZigZag Down                                               |
 //+------------------------------------------------------------------+
-void NewDownTrend(const int i, const int plus, const datetime &time[], const double &high[], const double &low[])
+void ChangeZigZagDown(int ratesTotal, int i, double low)
 {
-   int ibar;
-   int j = i + plus;
-
-   g_trendType = ZZM_TREND_DOWN;
-   g_iSearchBar = 1;
-
-   if (g_iHighPrice <= high[j] && (ibar = iBarShift(NULL, 0, g_iHighTime, true)) != -1)
+   for (int j = i + 1; j < ratesTotal; j++)
    {
-      if (ibar != j)
+      if (g_bufferTrend[j] < 0)
       {
-         g_iHighTime = time[j];
-         g_iHighPrice = high[j];
-
-         g_bufferUp[ibar] = ZZM_BUFFER_EMPTY;
-         g_bufferUp[j] = high[j];
-         g_bufferTrend[j] = ZZM_BUFFER_TREND_UP;
-         g_bufferMaxChangePoints[j] = low[j];
-
-         if (g_bufferDown[ibar] != ZZM_BUFFER_EMPTY)
-            g_bufferTrend[ibar] = ZZM_BUFFER_TREND_DOWN;
+         g_bufferDown[j] = ZZM_BUFFER_EMPTY;
+         break;
       }
-
-      if (g_iSaveTime)
-         g_iSaveTime = g_iSaveBar = 0;
+      else if (g_bufferTrend[j] > 0)
+         break;
    }
 
-   g_iLowTime = time[i];
-   g_iLowPrice = low[i];
-   g_bufferDown[i] = low[i];
+   g_bufferUp[i] = ZZM_BUFFER_EMPTY;
+   g_bufferDown[i] = low;
+   g_bufferMaxChangePoints[i] = low;
    g_bufferTrend[i] = ZZM_BUFFER_TREND_DOWN;
-   g_bufferMaxChangePoints[i] = high[i];
 }
 
 //+------------------------------------------------------------------+
