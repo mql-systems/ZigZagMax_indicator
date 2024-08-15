@@ -2,10 +2,10 @@
 //+------------------------------------------------------------------+
 //|                                                    ZigZagMax.mq4 |
 //|                       Copyright 2022-2024, Diamond Systems Corp. |
-//|                                   https://github.com/mql-systems |
+//|               https://github.com/mql-systems/ZigZagMax_indicator |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2022-2024, Diamond Systems Corp."
-#property link      "https://github.com/mql-systems"
+#property link      "https://github.com/mql-systems/ZigZagMax_indicator"
 #property strict
 
 //--- defines

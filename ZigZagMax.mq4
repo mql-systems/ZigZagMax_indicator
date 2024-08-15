@@ -1,11 +1,11 @@
 //+------------------------------------------------------------------+
 //|                                                    ZigZagMax.mq4 |
 //|                       Copyright 2022-2024, Diamond Systems Corp. |
-//|                                   https://github.com/mql-systems |
+//|               https://github.com/mql-systems/ZigZagMax_indicator |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2022-2024, Diamond Systems Corp."
-#property link      "https://github.com/mql-systems"
-#property version   "1.02"
+#property link      "https://github.com/mql-systems/ZigZagMax_indicator"
+#property version   "1.00"
 #property indicator_chart_window
 //---
 #property indicator_buffers 3
