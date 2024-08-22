@@ -9,15 +9,20 @@
 #property strict
 
 //--- defines
-#define ZZM_TREND_NONE     0
-#define ZZM_TREND_UP       1
-#define ZZM_TREND_DOWN    -1
-
 #define ZZM_BUFFER_EMPTY            0.0
 #define ZZM_BUFFER_TREND_UP         1.0
 #define ZZM_BUFFER_TREND_UP_DOWN    2.0
 #define ZZM_BUFFER_TREND_DOWN      -1.0
 #define ZZM_BUFFER_TREND_DOWN_UP   -2.0
+
+//--- ENUMs
+enum ZZM_TREND
+{
+   ZZM_TREND_ERROR = -1,
+   ZZM_TREND_NONE,
+   ZZM_TREND_UP,
+   ZZM_TREND_DOWN,
+};
 
 //--- global variables
 datetime g_lastBarTime;
@@ -120,18 +125,93 @@ int OnCalculate(const int ratesTotal,
    {
       if (high[i+1] < high[i])
       {
-         if (low[i+1] < low[i] || g_bufferTrend[i] > 0)
+         if (low[i+1] < low[i])
             ChangeZigZagUp(ratesTotal, i, high[i]);
          else
-            ChangeZigZagDown(ratesTotal, i, low[i]);
+         {
+            switch (PrevBarBreakSide(time[i], high[i+1], low[i+1]))
+            {
+               case ZZM_TREND_UP:
+                  ChangeZigZagUp(ratesTotal, i, high[i]);
+                  break;
+               case ZZM_TREND_DOWN:
+                  ChangeZigZagDown(ratesTotal, i, low[i]);
+                  break;
+               // case ZZM_TREND_NONE AND DEFAULT:
+               // You should not hope for this calculation, since it considers open and close prices.
+               default:
+                  if (open[i] < close[i])
+                     ChangeZigZagUp(ratesTotal, i, high[i]);
+                  else
+                     ChangeZigZagDown(ratesTotal, i, low[i]);
+            }
+         }
       }
-      else if (low[i+1] > low[i] || g_bufferTrend[i] < 0)
+      else if (low[i+1] > low[i])
          ChangeZigZagDown(ratesTotal, i, low[i]);
-      else
-         ChangeZigZagUp(ratesTotal, i, high[i]);
+      // else
+      //    Print("TREND_NONE"); // TODO: TREND_NONE
    }
 
    return ratesTotal;
+}
+
+//+------------------------------------------------------------------+
+//| The breakdown side of the previous bar                           |
+//+------------------------------------------------------------------+
+ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, const double prevBarLow)
+{
+   long timeMs = time * 1000;
+
+   // search in M1
+   if (Period() != PERIOD_M1)
+   {
+      MqlRates rates[];
+      int ratesCnt = CopyRates(_Symbol, PERIOD_M1, time, time + PeriodSeconds() - 1, rates);
+      if (ratesCnt > 0)
+      {
+         int i = 0;
+         for (; i < ratesCnt; i++)
+         {
+            if (prevBarHigh < rates[i].high)
+            {
+               if (prevBarLow > rates[i].low)
+               {
+                  timeMs = rates[i].time * 1000;
+                  break;  // search in ticks
+               }
+               else
+                  return ZZM_TREND_UP;
+            }
+            else if (prevBarLow > rates[i].low)
+               return ZZM_TREND_DOWN;
+         }
+         if (i >= ratesCnt)
+            return ZZM_TREND_NONE;
+      }
+      else
+         return ZZM_TREND_ERROR;
+   }
+
+   // search in ticks
+   MqlTick ticks[];
+   int ticksCnt = CopyTicksRange(_Symbol, ticks, COPY_TICKS_ALL, timeMs, timeMs + 60000);
+   if (ticksCnt < 1)
+      return ZZM_TREND_ERROR;
+
+   for (int i = 0; i < ticksCnt; i++)
+   {
+      // TODO: The tick flags do not match TICK_FLAG_*. They wrote to the forum https://www.mql5.com/ru/forum/471829.
+      //       We are waiting for a response for correction.
+      if (/* ticks[i].flags != TICK_FLAG_BID || */ ticks[i].bid < _Point)
+         continue;
+      if (prevBarHigh < ticks[i].bid)
+         return ZZM_TREND_UP;
+      else if (prevBarLow > ticks[i].bid)
+         return ZZM_TREND_DOWN;
+   }
+   
+   return ZZM_TREND_NONE;
 }
 
 //+------------------------------------------------------------------+
