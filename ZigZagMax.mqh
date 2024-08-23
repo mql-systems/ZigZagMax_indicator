@@ -87,7 +87,7 @@ int OnCalculate(const int ratesTotal,
    int limit = ratesTotal - prevCalculated;
    if (limit <= 0)
       return ratesTotal;
-   if (ratesTotal < 2 || prevCalculated < 0)
+   if (ratesTotal < 3 || prevCalculated < 0)
       return 0;
    
    ArraySetAsSeries(high, true);
@@ -114,6 +114,7 @@ int OnCalculate(const int ratesTotal,
          g_bufferMaxChangePoints[limit] = high[limit];
          g_bufferTrend[limit] = ZZM_BUFFER_TREND_UP;
       }
+      limit--;
    }
    else if (time[limit] != g_lastBarTime)
       return 0;
@@ -121,7 +122,7 @@ int OnCalculate(const int ratesTotal,
    g_lastBarTime = time[1];
    
    //--- calculate
-   for (int i = limit - 1; i > 0; i--)
+   for (int i = limit; i > 0; i--)
    {
       if (high[i+1] < high[i])
       {
