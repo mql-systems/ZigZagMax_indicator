@@ -16,7 +16,7 @@
 #define ZZM_BUFFER_TREND_DOWN_UP   -2.0
 
 //--- ENUMs
-enum ZZM_TREND
+enum ENUM_ZZM_TREND
 {
    ZZM_TREND_ERROR = -1,
    ZZM_TREND_NONE,
@@ -159,7 +159,7 @@ int OnCalculate(const int ratesTotal,
 //+------------------------------------------------------------------+
 //| The breakdown side of the previous bar                           |
 //+------------------------------------------------------------------+
-ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, const double prevBarLow)
+ENUM_ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, const double prevBarLow)
 {
    long timeMs = time * 1000;
 
