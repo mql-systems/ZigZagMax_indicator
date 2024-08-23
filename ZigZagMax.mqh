@@ -51,8 +51,8 @@ int OnInit()
 
    SetIndexBuffer(0, g_bufferUp);
    SetIndexBuffer(1, g_bufferDown);
-   SetIndexBuffer(3, g_bufferMaxChangePoints);
-   SetIndexBuffer(2, g_bufferTrend, INDICATOR_CALCULATIONS);
+   SetIndexBuffer(2, g_bufferMaxChangePoints);
+   SetIndexBuffer(3, g_bufferTrend, INDICATOR_CALCULATIONS);
 
 #ifdef __MQL4__
    SetIndexEmptyValue(0, ZZM_BUFFER_EMPTY);
