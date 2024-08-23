@@ -201,9 +201,7 @@ ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, const 
 
    for (int i = 0; i < ticksCnt; i++)
    {
-      // TODO: The tick flags do not match TICK_FLAG_*. They wrote to the forum https://www.mql5.com/ru/forum/471829.
-      //       We are waiting for a response for correction.
-      if (/* ticks[i].flags != TICK_FLAG_BID || */ ticks[i].bid < _Point)
+      if ((ticks[i].flags & TICK_FLAG_BID) != TICK_FLAG_BID || ticks[i].bid < _Point)
          continue;
       if (prevBarHigh < ticks[i].bid)
          return ZZM_TREND_UP;
