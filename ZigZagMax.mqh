@@ -71,6 +71,15 @@ int OnInit()
 }
 
 //+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+   g_lastBarTime = 0;
+   g_prevZigZagPointBar = 0;
+}
+
+//+------------------------------------------------------------------+
 //| Indicator iteration function                                     |
 //+------------------------------------------------------------------+
 int OnCalculate(const int ratesTotal,
