@@ -128,8 +128,11 @@ int OnCalculate(const int ratesTotal,
    g_lastBarTime = time[1];
    
    //--- calculate
-   for (int i = limit; i > 0; i--)
+   for (int i = limit; i > 0 && ! IsStopped(); i--)
    {
+      if (limit > 10)
+         Comment("Load: ",DoubleToString(100 - (i / (limit * 1.0)) * 100, 2),"%");
+
       if (high[i+1] < high[i] + DOUBLE_MIN_STEP)
       {
          if (low[i+1] < low[i] + DOUBLE_MIN_STEP)
@@ -174,6 +177,9 @@ int OnCalculate(const int ratesTotal,
          g_bufferDown[i] = ZZM_BUFFER_EMPTY;
       }
    }
+
+   if (limit > 10)
+      Comment("");
 
    return ratesTotal;
 }
@@ -307,7 +313,7 @@ ENUM_ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, c
       if (ratesCnt > 0)
       {
          int i = 0;
-         for (; i < ratesCnt; i++)
+         for (; i < ratesCnt && ! IsStopped(); i++)
          {
             if (prevBarHigh < rates[i].high)
             {
@@ -335,7 +341,7 @@ ENUM_ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, c
    if (ticksCnt < 1)
       return ZZM_TREND_ERROR;
 
-   for (int i = 0; i < ticksCnt; i++)
+   for (int i = 0; i < ticksCnt && ! IsStopped(); i++)
    {
       if ((ticks[i].flags & TICK_FLAG_BID) != TICK_FLAG_BID || ticks[i].bid < _Point)
          continue;
