@@ -98,12 +98,11 @@ int OnCalculate(const int ratesTotal,
    ArraySetAsSeries(time, true);
 
    //--- first start indicator (initialize)
-   if (prevCalculated == 0)
+   if (prevCalculated == 0 || time[limit] != g_lastBarTime)
    {
       BufferInitialize();
 
-      limit--;
-      g_prevZigZagPointBar = limit;
+      limit = ratesTotal - 1;
 
       if (open[limit] > close[limit])
       {
@@ -119,10 +118,10 @@ int OnCalculate(const int ratesTotal,
          g_bufferMaxChangePoints[limit] = high[limit];
          g_bufferTrend[limit] = ZZM_BUFFER_TREND_UP;
       }
+
+      g_prevZigZagPointBar = limit;
       limit--;
    }
-   else if (time[limit] != g_lastBarTime)
-      return 0;
    else
       g_prevZigZagPointBar += limit;
    
@@ -287,7 +286,6 @@ void ZigZagDownUp(int i, double high, double low)
       g_bufferTrend[i] = ZZM_BUFFER_TREND_DOWN_UP;
       g_bufferDown[i] = low;
    }
-   
    
    g_prevZigZagPointBar = i;
    g_bufferMaxChangePoints[i] = high;
