@@ -36,6 +36,8 @@ enum ENUM_ZZM_TREND
 //--- global variables
 datetime g_lastBarTime;
 int      g_prevZigZagPointBar;
+int      g_errorBarsCnt;
+string   g_globalVarName_ErrorBarsCnt;
 
 //--- buffers
 double g_bufferUp[];
@@ -67,6 +69,12 @@ int OnInit()
 
    BufferInitialize();
 
+   //--- global variables
+   g_errorBarsCnt = 0;
+   g_globalVarName_ErrorBarsCnt = "ZZM_" + _Symbol + "_" + IntegerToString(PeriodSeconds()) + "_ErrorBarsCnt";
+
+   GlobalVariableSet(g_globalVarName_ErrorBarsCnt, 0.0);
+
    return INIT_SUCCEEDED;
 }
 
@@ -77,6 +85,10 @@ void OnDeinit(const int reason)
 {
    g_lastBarTime = 0;
    g_prevZigZagPointBar = 0;
+   g_errorBarsCnt = 0;
+
+   Comment("");
+   GlobalVariableDel(g_globalVarName_ErrorBarsCnt);
 }
 
 //+------------------------------------------------------------------+
@@ -139,8 +151,7 @@ int OnCalculate(const int ratesTotal,
    //--- calculate
    for (int i = limit; i > 0 && ! IsStopped(); i--)
    {
-      if (limit > 10)
-         Comment("Load: ",DoubleToString(100 - (i / (limit * 1.0)) * 100, 2),"%");
+      Comment("Load: ", DoubleToString(100 - (i / (limit * 1.0)) * 100, 2), "%");
 
       if (high[i+1] < high[i] + DOUBLE_MIN_STEP)
       {
@@ -157,6 +168,7 @@ int OnCalculate(const int ratesTotal,
                   ZigZagDownUp(i, high[i], low[i]);
                   break;
                default:
+                  g_errorBarsCnt++;
                   // The rest of the case: you should not hope for this calculation, since it considers open and close prices.
                   if (open[i] > close[i])
                      ZigZagUpDown(i, high[i], low[i]);
@@ -187,8 +199,17 @@ int OnCalculate(const int ratesTotal,
       }
    }
 
-   if (limit > 10)
+   //--- calc accuracy
+   if (g_errorBarsCnt > 0)
+   {
+      GlobalVariableSet(g_globalVarName_ErrorBarsCnt, g_errorBarsCnt);
+      Comment("Accuracy: ", DoubleToString(100 - (g_errorBarsCnt / (ratesTotal * 1.0)) * 100, 2));
+   }
+   else
+   {
+      GlobalVariableSet(g_globalVarName_ErrorBarsCnt, 0.0);
       Comment("");
+   }
 
    return ratesTotal;
 }
@@ -359,7 +380,7 @@ ENUM_ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, c
       else if (prevBarLow > ticks[i].bid)
          return ZZM_TREND_DOWN;
    }
-   
+
    return ZZM_TREND_NONE;
 }
 
