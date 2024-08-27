@@ -106,11 +106,11 @@ int OnCalculate(const int ratesTotal,
                 const int &spread[])
 {
    //--- new bar
-   int limit = ratesTotal - prevCalculated;
-   if (limit <= 0)
+   if (ratesTotal - prevCalculated <= 0)
       return ratesTotal;
    if (ratesTotal < 3 || prevCalculated < 0)
       return 0;
+   int limit = ratesTotal - prevCalculated;
    
    ArraySetAsSeries(high, true);
    ArraySetAsSeries(low, true);
