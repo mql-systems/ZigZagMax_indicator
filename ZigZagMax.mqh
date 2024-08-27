@@ -237,7 +237,7 @@ int OnCalculate(const int ratesTotal,
    if (i_IsUseTickHistory)
    {
       GlobalVariableSet(g_globalVarName_ErrorBarsCnt, g_errorBarsCnt);
-      if (g_errorBarsCnt > 0)
+      if (g_errorBarsCnt > 0 && isInitialize)
          Print("Accuracy: ", DoubleToString(100 - (g_errorBarsCnt / (ratesTotal * 1.0)) * 100, 2));
    }
 
@@ -368,8 +368,14 @@ ENUM_ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, c
    // search in M1
    if (Period() != PERIOD_M1)
    {
+      int ratesCnt = 0;
       MqlRates rates[];
-      int ratesCnt = CopyRates(_Symbol, PERIOD_M1, time, time + PeriodSeconds() - 1, rates);
+      for (int i = 0; i < 3; i++)
+      {
+         ratesCnt = CopyRates(_Symbol, PERIOD_M1, time, time + PeriodSeconds() - 1, rates);
+         if (ratesCnt > 0)
+            break;
+      }
       if (ratesCnt > 0)
       {
          int i = 0;
@@ -403,7 +409,13 @@ ENUM_ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, c
    do
    {
       MqlTick ticks[];
-      int ticksCnt = CopyTicks(_Symbol, ticks, COPY_TICKS_ALL, timeMs, 50);
+      int ticksCnt = 0;
+      for (int i = 0; i < 3; i++)
+      {
+         ticksCnt = CopyTicks(_Symbol, ticks, COPY_TICKS_ALL, timeMs, 50);
+         if (ticksCnt > 0)
+            break;
+      }
       if (ticksCnt < 1)
          return ZZM_TREND_ERROR;
 
