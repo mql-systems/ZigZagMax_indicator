@@ -33,8 +33,15 @@ enum ENUM_ZZM_TREND
    ZZM_TREND_DOWN_UP,
 };
 
+//--- structs
+struct PrevCalcDataInfo
+{
+   int      firstBarIndex;
+   datetime firstBarTime;
+   datetime lastBarTime;
+};
+
 //--- global variables
-datetime g_lastBarTime;
 int      g_prevZigZagPointBar;
 int      g_errorBarsCnt;
 string   g_globalVarName_ErrorBarsCnt;
@@ -44,6 +51,8 @@ double g_bufferUp[];
 double g_bufferDown[];
 double g_bufferMaxChangePoints[];
 double g_bufferTrend[];
+//---
+PrevCalcDataInfo g_prevCalcDataInfo;
 
 //+------------------------------------------------------------------+
 //| App initialization function                                      |
@@ -70,7 +79,6 @@ int OnInit()
    BufferInitialize();
 
    //--- global variables
-   g_errorBarsCnt = 0;
    g_globalVarName_ErrorBarsCnt = "ZZM_" + _Symbol + "_" + IntegerToString(PeriodSeconds()) + "_ErrorBarsCnt";
 
    GlobalVariableSet(g_globalVarName_ErrorBarsCnt, 0.0);
@@ -83,9 +91,11 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
-   g_lastBarTime = 0;
    g_prevZigZagPointBar = 0;
    g_errorBarsCnt = 0;
+   g_prevCalcDataInfo.firstBarIndex = 0;
+   g_prevCalcDataInfo.firstBarTime = 0;
+   g_prevCalcDataInfo.lastBarTime = 0;
 
    Comment("");
    GlobalVariableDel(g_globalVarName_ErrorBarsCnt);
@@ -108,7 +118,7 @@ int OnCalculate(const int ratesTotal,
    //--- new bar
    if (ratesTotal - prevCalculated <= 0)
       return ratesTotal;
-   if (ratesTotal < 3 || prevCalculated < 0)
+   if (ratesTotal < 5 || prevCalculated < 0)
       return 0;
    int limit = ratesTotal - prevCalculated;
    
@@ -119,7 +129,19 @@ int OnCalculate(const int ratesTotal,
    ArraySetAsSeries(time, true);
 
    //--- first start indicator (initialize)
-   if (prevCalculated == 0 || time[limit] != g_lastBarTime)
+   bool isInitialize = prevCalculated < 2;
+   if (! isInitialize)
+   {
+      if (time[1] != g_prevCalcDataInfo.lastBarTime)
+      {
+         if (time[limit + 1] != g_prevCalcDataInfo.lastBarTime)
+            isInitialize = true;
+      }
+      else if (time[g_prevCalcDataInfo.firstBarIndex] != g_prevCalcDataInfo.firstBarTime)
+         return true;
+   }
+
+   if (isInitialize)
    {
       BufferInitialize();
 
@@ -146,11 +168,14 @@ int OnCalculate(const int ratesTotal,
    else
       g_prevZigZagPointBar += limit;
    
-   g_lastBarTime = time[1];
-   
    //--- calculate
    for (int i = limit; i > 0 && ! IsStopped(); i--)
    {
+      // a pass, the bar has already been processed
+      if (time[i] >= g_prevCalcDataInfo.firstBarTime && time[i] <= g_prevCalcDataInfo.lastBarTime)
+         continue;
+      
+      // calc bar
       Comment("Load: ", DoubleToString(100 - (i / (limit * 1.0)) * 100, 2), "%");
 
       if (high[i+1] < high[i] + DOUBLE_MIN_STEP)
@@ -198,6 +223,10 @@ int OnCalculate(const int ratesTotal,
          g_bufferDown[i] = ZZM_BUFFER_EMPTY;
       }
    }
+
+   g_prevCalcDataInfo.firstBarIndex = ratesTotal - 1;
+   g_prevCalcDataInfo.firstBarTime = time[g_prevCalcDataInfo.firstBarIndex];
+   g_prevCalcDataInfo.lastBarTime = time[1];
 
    //--- calc accuracy
    if (g_errorBarsCnt > 0)
@@ -389,6 +418,12 @@ ENUM_ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, c
 //+------------------------------------------------------------------+
 void BufferInitialize()
 {
+   g_errorBarsCnt = 0;
+
+   g_prevCalcDataInfo.firstBarIndex = 0;
+   g_prevCalcDataInfo.firstBarTime = 0;
+   g_prevCalcDataInfo.lastBarTime = 0;
+
    ArrayInitialize(g_bufferUp, ZZM_BUFFER_EMPTY);
    ArrayInitialize(g_bufferDown, ZZM_BUFFER_EMPTY);
    ArrayInitialize(g_bufferMaxChangePoints, ZZM_BUFFER_EMPTY);
