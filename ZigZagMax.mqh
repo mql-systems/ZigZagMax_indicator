@@ -19,10 +19,6 @@
 #define ZZM_BUFFER_TREND_DOWN_UP         -2.0
 #define ZZM_BUFFER_TREND_DOWN_ENGULFING  -3.0
 
-//--- inputs
-input bool i_IsUseTickHistory = false;    // Use tick history
-input bool i_IsEngulfingPoints = true;    // Engulfing points
-
 //--- ENUMs
 enum ENUM_ZZM_TREND
 {
@@ -33,6 +29,15 @@ enum ENUM_ZZM_TREND
    ZZM_TREND_UP_DOWN,
    ZZM_TREND_DOWN_UP,
 };
+enum ENUM_ZZM_CALC_TYPE
+{
+   ZZM_CALC_ENGULFING_BARS,   // Engulfing bars
+   ZZM_CALC_BREAKOUTS,        // Breakouts
+};
+
+//--- inputs
+input bool                 i_IsUseTickHistory = false;               // Use tick history
+input ENUM_ZZM_CALC_TYPE   i_ZzmCalcType = ZZM_CALC_ENGULFING_BARS;  // ZigZag type (filter)
 
 //--- structs
 struct PrevCalcDataInfo
@@ -207,7 +212,7 @@ int OnCalculate(const int ratesTotal,
       }
       else if (low[i+1] > low[i] - DOUBLE_MIN_STEP)
          ZigZagDown(i, high[i], low[i]);
-      else if (i_IsEngulfingPoints)
+      else if (i_ZzmCalcType == ZZM_CALC_ENGULFING_BARS)
       {
          if (g_bufferMaxChangePoints[i+1] > high[i])
             ZigZagDown(i, high[i], low[i]);
@@ -273,7 +278,7 @@ void DeletePrevZigZagPoint(ENUM_ZZM_TREND trend)
 //+------------------------------------------------------------------+
 void ZigZagUp(int i, double high, double low)
 {
-   if (! i_IsEngulfingPoints && g_bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY && g_bufferUp[g_prevZigZagPointBar] != ZZM_BUFFER_EMPTY)
+   if (i_ZzmCalcType != ZZM_CALC_ENGULFING_BARS && g_bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY && g_bufferUp[g_prevZigZagPointBar] != ZZM_BUFFER_EMPTY)
    {
       g_bufferTrend[i] = ZZM_BUFFER_TREND_DOWN_UP;
       g_bufferDown[i] = low;
@@ -295,7 +300,7 @@ void ZigZagUp(int i, double high, double low)
 //+------------------------------------------------------------------+
 void ZigZagDown(int i, double high, double low)
 {
-   if (! i_IsEngulfingPoints && g_bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY && g_bufferDown[g_prevZigZagPointBar] != ZZM_BUFFER_EMPTY)
+   if (i_ZzmCalcType != ZZM_CALC_ENGULFING_BARS && g_bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY && g_bufferDown[g_prevZigZagPointBar] != ZZM_BUFFER_EMPTY)
    {
       g_bufferTrend[i] = ZZM_BUFFER_TREND_UP_DOWN;
       g_bufferUp[i] = high;
@@ -317,7 +322,7 @@ void ZigZagDown(int i, double high, double low)
 //+------------------------------------------------------------------+
 void ZigZagUpDown(int i, double high, double low)
 {
-   if (! i_IsEngulfingPoints && g_bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY &&
+   if (i_ZzmCalcType != ZZM_CALC_ENGULFING_BARS && g_bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY &&
        g_bufferUp[g_prevZigZagPointBar] != ZZM_BUFFER_EMPTY && g_bufferUp[g_prevZigZagPointBar] > high + DOUBLE_MIN_STEP)
    {
       g_bufferTrend[i] = ZZM_BUFFER_TREND_DOWN;
@@ -340,7 +345,7 @@ void ZigZagUpDown(int i, double high, double low)
 //+------------------------------------------------------------------+
 void ZigZagDownUp(int i, double high, double low)
 {
-   if (! i_IsEngulfingPoints && g_bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY &&
+   if (i_ZzmCalcType != ZZM_CALC_ENGULFING_BARS && g_bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY &&
        g_bufferDown[g_prevZigZagPointBar] != ZZM_BUFFER_EMPTY && g_bufferDown[g_prevZigZagPointBar] < low - DOUBLE_MIN_STEP)
    {
       g_bufferTrend[i] = ZZM_BUFFER_TREND_UP;
