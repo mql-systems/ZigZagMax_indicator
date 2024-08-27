@@ -20,6 +20,7 @@
 #define ZZM_BUFFER_TREND_DOWN_ENGULFING  -3.0
 
 //--- inputs
+input bool i_IsUseTickHistory = false;    // Use tick history
 input bool i_IsEngulfingPoints = true;    // Engulfing points
 
 //--- ENUMs
@@ -176,7 +177,8 @@ int OnCalculate(const int ratesTotal,
          continue;
       
       // calc bar
-      Comment("Load: ", DoubleToString(100 - (i / (limit * 1.0)) * 100, 2), "%");
+      if (limit > 100)
+         Comment("Load: ", DoubleToString(100 - (i / (limit * 1.0)) * 100, 2), "%");
 
       if (high[i+1] < high[i] + DOUBLE_MIN_STEP)
       {
@@ -193,7 +195,8 @@ int OnCalculate(const int ratesTotal,
                   ZigZagDownUp(i, high[i], low[i]);
                   break;
                default:
-                  g_errorBarsCnt++;
+                  if (i_IsUseTickHistory)
+                     g_errorBarsCnt++;
                   // The rest of the case: you should not hope for this calculation, since it considers open and close prices.
                   if (open[i] > close[i])
                      ZigZagUpDown(i, high[i], low[i]);
@@ -228,16 +231,14 @@ int OnCalculate(const int ratesTotal,
    g_prevCalcDataInfo.firstBarTime = time[g_prevCalcDataInfo.firstBarIndex];
    g_prevCalcDataInfo.lastBarTime = time[1];
 
+   Comment("");
+
    //--- calc accuracy
-   if (g_errorBarsCnt > 0)
+   if (i_IsUseTickHistory)
    {
       GlobalVariableSet(g_globalVarName_ErrorBarsCnt, g_errorBarsCnt);
-      Comment("Accuracy: ", DoubleToString(100 - (g_errorBarsCnt / (ratesTotal * 1.0)) * 100, 2));
-   }
-   else
-   {
-      GlobalVariableSet(g_globalVarName_ErrorBarsCnt, 0.0);
-      Comment("");
+      if (g_errorBarsCnt > 0)
+         Print("Accuracy: ", DoubleToString(100 - (g_errorBarsCnt / (ratesTotal * 1.0)) * 100, 2));
    }
 
    return ratesTotal;
@@ -395,6 +396,9 @@ ENUM_ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, c
    }
 
    // search in ticks
+   if (! i_IsUseTickHistory)
+      return ZZM_TREND_NONE;
+   
    long timeMsEnd = timeMs + 60000;
    do
    {
