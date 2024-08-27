@@ -395,21 +395,28 @@ ENUM_ZZM_TREND PrevBarBreakSide(const datetime time, const double prevBarHigh, c
    }
 
    // search in ticks
-   MqlTick ticks[];
-   int ticksCnt = CopyTicksRange(_Symbol, ticks, COPY_TICKS_ALL, timeMs, timeMs + 60000);
-   if (ticksCnt < 1)
-      return ZZM_TREND_ERROR;
-
-   for (int i = 0; i < ticksCnt && ! IsStopped(); i++)
+   long timeMsEnd = timeMs + 60000;
+   do
    {
-      if ((ticks[i].flags & TICK_FLAG_BID) != TICK_FLAG_BID || ticks[i].bid < _Point)
-         continue;
-      if (prevBarHigh < ticks[i].bid)
-         return ZZM_TREND_UP;
-      else if (prevBarLow > ticks[i].bid)
-         return ZZM_TREND_DOWN;
-   }
+      MqlTick ticks[];
+      int ticksCnt = CopyTicks(_Symbol, ticks, COPY_TICKS_ALL, timeMs, 50);
+      if (ticksCnt < 1)
+         return ZZM_TREND_ERROR;
 
+      for (int i = 0; i < ticksCnt && ! IsStopped(); i++)
+      {
+         if ((ticks[i].flags & TICK_FLAG_BID) != TICK_FLAG_BID || ticks[i].bid < _Point)
+            continue;
+         if (prevBarHigh < ticks[i].bid)
+            return ZZM_TREND_UP;
+         else if (prevBarLow > ticks[i].bid)
+            return ZZM_TREND_DOWN;
+         if (ticks[i].time_msc >= timeMsEnd)
+            return ZZM_TREND_NONE;
+      }
+      timeMs = ticks[ticksCnt - 1].time_msc + 1;
+   } while (! IsStopped());
+   
    return ZZM_TREND_NONE;
 }
 
