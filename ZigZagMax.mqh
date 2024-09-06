@@ -247,25 +247,18 @@ void ZigZagDown(int i, double high, double low)
 //+------------------------------------------------------------------+
 void ZigZagUpDown(int i, double high, double low)
 {
-   ZigZagBuffers.bufferTrend[i] = ZZM_BUFFER_EMPTY;
+   double _high = high + DOUBLE_MIN_STEP;
 
    switch (i_ZzmCalcType)
    {
       case ZZM_CALC_MAIN_DIRECTIONS:
-         if (ZigZagBuffers.IsLastTrendDown())
-         {
-            if (ZigZagBuffers.GetLastDown() < low)
-               ZigZagBuffers.SetDownEngulfing(i);
-            else
-               ZigZagBuffers.SetDown(i, low);
-            return;
-         }
-         else if (ZigZagBuffers.GetLastUp() > high)
-         {
+         if (ZigZagBuffers.GetLastUp() < _high || (ZigZagBuffers.IsLastTrendDown() && ZigZagBuffers.pointBarDown > i+1 && iHigh(NULL, 0, ZigZagBuffers.pointBarDown) < _high))
+            break;
+         if (ZigZagBuffers.GetLastDown() < low)
+            ZigZagBuffers.SetDownEngulfing(i);
+         else
             ZigZagBuffers.SetDown(i, low);
-            return;
-         }
-         break;
+         return;
       case ZZM_CALC_BREAKOUTS:
          if (ZigZagBuffers.bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY && ZigZagBuffers.IsLastTrendUp() && ZigZagBuffers.GetLastUp() > high + DOUBLE_MIN_STEP)
          {
@@ -283,23 +276,18 @@ void ZigZagUpDown(int i, double high, double low)
 //+------------------------------------------------------------------+
 void ZigZagDownUp(int i, double high, double low)
 {
+   double _low = low - DOUBLE_MIN_STEP;
+   
    switch (i_ZzmCalcType)
    {
       case ZZM_CALC_MAIN_DIRECTIONS:
-         if (ZigZagBuffers.IsLastTrendUp())
-         {
-            if (ZigZagBuffers.GetLastUp() > high)
-               ZigZagBuffers.SetUpEngulfing(i);
-            else
-               ZigZagBuffers.SetUp(i, high);
-            return;
-         }
-         else if (ZigZagBuffers.GetLastDown() < low)
-         {
+         if (ZigZagBuffers.GetLastDown() > _low || (ZigZagBuffers.IsLastTrendUp() && ZigZagBuffers.pointBarUp > i+1 && iLow(NULL, 0, ZigZagBuffers.pointBarUp) > _low))
+            break;
+         if (ZigZagBuffers.GetLastUp() > high)
+            ZigZagBuffers.SetUpEngulfing(i);
+         else
             ZigZagBuffers.SetUp(i, high);
-            return;
-         }
-         break;
+         return;
       case ZZM_CALC_BREAKOUTS:
          if (ZigZagBuffers.bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY && ZigZagBuffers.IsLastTrendDown() && ZigZagBuffers.GetLastDown() < low - DOUBLE_MIN_STEP)
          {
