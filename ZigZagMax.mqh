@@ -198,16 +198,10 @@ void ZigZagUp(int i, double high, double low)
    switch (i_ZzmCalcType)
    {
       case ZZM_CALC_MAIN_DIRECTIONS:
+      case ZZM_CALC_BREAKOUTS:
          if (ZigZagBuffers.IsLastTrendUp() && ZigZagBuffers.GetLastUp() > high)
          {
             ZigZagBuffers.SetUpEngulfing(i);
-            return;
-         }
-         break;
-      case ZZM_CALC_BREAKOUTS:
-         if (ZigZagBuffers.bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY && ZigZagBuffers.IsLastTrendUp())
-         {
-            ZigZagBuffers.SetDownUp(i, high, low);
             return;
          }
          break;
@@ -224,16 +218,10 @@ void ZigZagDown(int i, double high, double low)
    switch (i_ZzmCalcType)
    {
       case ZZM_CALC_MAIN_DIRECTIONS:
+      case ZZM_CALC_BREAKOUTS:
          if (ZigZagBuffers.IsLastTrendDown() && ZigZagBuffers.GetLastDown() < low)
          {
             ZigZagBuffers.SetDownEngulfing(i);
-            return;
-         }
-         break;
-      case ZZM_CALC_BREAKOUTS:
-         if (ZigZagBuffers.bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY && ZigZagBuffers.IsLastTrendDown())
-         {
-            ZigZagBuffers.SetUpDown(i, high, low);
             return;
          }
          break;
@@ -259,7 +247,7 @@ void ZigZagUpDown(int i, double high, double low)
             ZigZagBuffers.SetDown(i, low);
          return;
       case ZZM_CALC_BREAKOUTS:
-         if (ZigZagBuffers.bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY && ZigZagBuffers.IsLastTrendUp() && ZigZagBuffers.GetLastUp() > high)
+         if (ZigZagBuffers.IsLastTrendUp() && ZigZagBuffers.GetLastUp() > high)
          {
             ZigZagBuffers.SetDown(i, low);
             return;
@@ -287,7 +275,7 @@ void ZigZagDownUp(int i, double high, double low)
             ZigZagBuffers.SetUp(i, high);
          return;
       case ZZM_CALC_BREAKOUTS:
-         if (ZigZagBuffers.bufferMaxChangePoints[i+1] == ZZM_BUFFER_EMPTY && ZigZagBuffers.IsLastTrendDown() && ZigZagBuffers.GetLastDown() < low)
+         if (ZigZagBuffers.IsLastTrendDown() && ZigZagBuffers.GetLastDown() < low)
          {
             ZigZagBuffers.SetUp(i, high);
             return;
